@@ -1,0 +1,17 @@
+[package]
+name = "hvk"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "Idiomatic Rust bindings for libguestfs"
+repository = "https://github.com/FyraLabs/hvk"
+documentation = "https://docs.rs/hvk"
+readme = "README.md"
+keywords = ["libguestfs", "guestfs", "disk-image"]
+categories = ["system-programming", "virtualization"]
+authors = ["Cappy Ishihara <cappy@fyralabs.com>","rmnscnce <rmnscnce@ya.ru>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+libguestfs-sys = "0.1.0"
