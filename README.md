@@ -1,4 +1,4 @@
-# hvm
+# hvk
 
 > Idiomatic Rust bindings for the libguestfs library.
 
