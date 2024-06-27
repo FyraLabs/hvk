@@ -1,10 +1,10 @@
 use crate::Result;
 use libguestfs_sys::guestfs_h;
-use types::DirEntList;
 use std::{
     ffi::{CStr, CString},
     io::{Cursor, Read},
 };
+use types::DirEntList;
 mod ffi_utils;
 mod types;
 
@@ -21,7 +21,6 @@ fn null_terminated_array_to_vec<'a>(array: *mut *mut i8) -> Vec<&'a str> {
         vec.push(cstr.to_str().unwrap());
         i += 1;
     }
-
     vec
 }
 
@@ -166,7 +165,7 @@ impl<'a> GuestFs<'a> {
         match unsafe { libguestfs_sys::guestfs_cat(self.handle, CString::new(path)?.as_ptr()) } {
             data if data.is_null() => Err(self.parse_error(self.last_error_number())),
             data => {
-                let data = unsafe { ffi_utils::from_raw_array_full(data) };
+                let data = ffi_utils::from_raw_array_full(data);
                 Ok(data.into_iter().map(|x| x.to_owned() as u8).collect())
             }
         }
@@ -174,8 +173,8 @@ impl<'a> GuestFs<'a> {
 
     /// Read a file and return a pointer to a Read trait object
     ///
-    /// This function is different from `[cat]` in that it can correctly handle files that contain embedded ASCII NUL characters, and
-    /// it returns a `Cursor<&[i8]>` instead of a `Vec<u8>`.
+    /// This function is different from [`Self::cat`] in that it can correctly handle files that
+    /// contain embedded ASCII NUL characters, and it returns a `Cursor<&[i8]>` instead of a `Vec<u8>`.
     pub fn read_file(&self, path: &str, buf_size: &mut usize) -> Result<Cursor<&[i8]>> {
         let buf = unsafe {
             libguestfs_sys::guestfs_read_file(self.handle, CString::new(path)?.as_ptr(), buf_size)
@@ -192,8 +191,9 @@ impl<'a> GuestFs<'a> {
 
     /// Read a file and return lines as an iterator
     pub fn read_lines(&self, path: &str) -> Result<Box<[String]>> {
-        match unsafe { libguestfs_sys::guestfs_read_lines(self.handle, CString::new(path)?.as_ptr()) }
-        {
+        match unsafe {
+            libguestfs_sys::guestfs_read_lines(self.handle, CString::new(path)?.as_ptr())
+        } {
             lines if lines.is_null() => Err(self.parse_error(self.last_error_number())),
             lines => {
                 let lines = unsafe { ffi_utils::from_raw_cstring_array_full(lines) };
@@ -222,17 +222,14 @@ impl<'a> GuestFs<'a> {
             )
         })
     }
-    
+
     /// List subdirectories of a directory
     pub fn readdir(&self, path: &str) -> Result<DirEntList> {
-        match unsafe { libguestfs_sys::guestfs_readdir(self.handle, CString::new(path)?.as_ptr()) } {
+        match unsafe { libguestfs_sys::guestfs_readdir(self.handle, CString::new(path)?.as_ptr()) }
+        {
             entries if entries.is_null() => Err(self.parse_error(self.last_error_number())),
             entries => {
-                let entries = unsafe { 
-                    DirEntList {
-                        inner: entries,
-                    }
-                };
+                let entries = DirEntList { inner: entries };
                 Ok(entries)
             }
         }
