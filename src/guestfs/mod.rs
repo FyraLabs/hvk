@@ -1,6 +1,10 @@
 use crate::Result;
 use libguestfs_sys::guestfs_h;
-use std::ffi::{CStr, CString};
+use types::DirEntList;
+use std::{
+    ffi::{CStr, CString},
+    io::{Cursor, Read},
+};
 mod ffi_utils;
 mod types;
 
@@ -164,6 +168,72 @@ impl<'a> GuestFs<'a> {
             data => {
                 let data = unsafe { ffi_utils::from_raw_array_full(data) };
                 Ok(data.into_iter().map(|x| x.to_owned() as u8).collect())
+            }
+        }
+    }
+
+    /// Read a file and return a pointer to a Read trait object
+    ///
+    /// This function is different from `[cat]` in that it can correctly handle files that contain embedded ASCII NUL characters, and
+    /// it returns a `Cursor<&[i8]>` instead of a `Vec<u8>`.
+    pub fn read_file(&self, path: &str, buf_size: &mut usize) -> Result<Cursor<&[i8]>> {
+        let buf = unsafe {
+            libguestfs_sys::guestfs_read_file(self.handle, CString::new(path)?.as_ptr(), buf_size)
+        };
+
+        if buf.is_null() {
+            return Err(self.parse_error(self.last_error_number()));
+        } else {
+            return Ok(Cursor::new(unsafe {
+                std::slice::from_raw_parts(buf, *buf_size)
+            }));
+        }
+    }
+
+    /// Read a file and return lines as an iterator
+    pub fn read_lines(&self, path: &str) -> Result<Box<[String]>> {
+        match unsafe { libguestfs_sys::guestfs_read_lines(self.handle, CString::new(path)?.as_ptr()) }
+        {
+            lines if lines.is_null() => Err(self.parse_error(self.last_error_number())),
+            lines => {
+                let lines = unsafe { ffi_utils::from_raw_cstring_array_full(lines) };
+                Ok(lines
+                    .into_iter()
+                    .map(|x| x.to_string_lossy().into_owned())
+                    .collect())
+            }
+        }
+    }
+
+    /// Create a directory at the specified path
+    pub fn mkdir(&self, path: &str) -> Result<()> {
+        self.wrap_error(unsafe {
+            libguestfs_sys::guestfs_mkdir(self.handle, CString::new(path)?.as_ptr())
+        })
+    }
+
+    /// Create a symbolic link to a specified target in the filesystem
+    pub fn ln_s(&self, target: &str, linkpath: &str) -> Result<()> {
+        self.wrap_error(unsafe {
+            libguestfs_sys::guestfs_ln_s(
+                self.handle,
+                CString::new(target)?.as_ptr(),
+                CString::new(linkpath)?.as_ptr(),
+            )
+        })
+    }
+    
+    /// List subdirectories of a directory
+    pub fn readdir(&self, path: &str) -> Result<DirEntList> {
+        match unsafe { libguestfs_sys::guestfs_readdir(self.handle, CString::new(path)?.as_ptr()) } {
+            entries if entries.is_null() => Err(self.parse_error(self.last_error_number())),
+            entries => {
+                let entries = unsafe { 
+                    DirEntList {
+                        inner: entries,
+                    }
+                };
+                Ok(entries)
             }
         }
     }
