@@ -10,10 +10,10 @@ pub enum Error {
     GuestFsError(String),
     #[error("I/O Error: {0}")]
     IoError(#[from] std::io::Error),
-    
+
     #[error("Invalid UTF-8: {0}")]
     Utf8Error(#[from] std::str::Utf8Error),
-    
+
     #[error("Invalid CString: {0}")]
     NulError(#[from] std::ffi::NulError),
 }

@@ -1,8 +1,8 @@
 use crate::Result;
 use libguestfs_sys::guestfs_h;
 use std::ffi::{CStr, CString};
-mod types;
 mod ffi_utils;
+mod types;
 
 #[must_use]
 fn null_terminated_array_to_vec<'a>(array: *mut *mut i8) -> Vec<&'a str> {
@@ -89,7 +89,7 @@ impl<'a> GuestFs<'a> {
     pub fn shutdown(&self) -> Result<()> {
         self.wrap_error(unsafe { libguestfs_sys::guestfs_shutdown(self.handle) })
     }
-    
+
     pub fn mount(&mut self, devpath: &str, mountpoint: &str) -> Result<()> {
         self.wrap_error(unsafe {
             libguestfs_sys::guestfs_mount(
@@ -121,11 +121,13 @@ impl<'a> GuestFs<'a> {
             partitions if partitions.is_null() => Err(self.parse_error(self.last_error_number())),
             partitions => {
                 let partitions = unsafe { ffi_utils::from_raw_cstring_array_full(partitions) };
-                Ok(partitions.into_iter().map(|x| x.to_string_lossy().into_owned()).collect())
+                Ok(partitions
+                    .into_iter()
+                    .map(|x| x.to_string_lossy().into_owned())
+                    .collect())
             }
         }
     }
-
 
     /// List filesystems inside the disk image
     ///
@@ -134,7 +136,10 @@ impl<'a> GuestFs<'a> {
             filesystems if filesystems.is_null() => Err(self.parse_error(self.last_error_number())),
             filesystems => {
                 let filesystems = unsafe { ffi_utils::from_raw_cstring_array_full(filesystems) };
-                Ok(filesystems.into_iter().map(|x| x.to_string_lossy().into_owned()).collect())
+                Ok(filesystems
+                    .into_iter()
+                    .map(|x| x.to_string_lossy().into_owned())
+                    .collect())
             }
         }
     }
@@ -162,5 +167,4 @@ impl<'a> GuestFs<'a> {
             }
         }
     }
-
 }

@@ -1,4 +1,3 @@
-
 use libguestfs_sys::guestfs_stat;
 
 use crate::filesystem::GuestFileSystem;
@@ -17,7 +16,7 @@ impl Drop for Stat {
 }
 
 pub struct LvmLv {
-    inner: *mut libguestfs_sys::guestfs_lvm_lv
+    inner: *mut libguestfs_sys::guestfs_lvm_lv,
 }
 
 impl Drop for LvmLv {
@@ -29,7 +28,7 @@ impl Drop for LvmLv {
 }
 
 pub struct LvmVg {
-    inner: *mut libguestfs_sys::guestfs_lvm_vg
+    inner: *mut libguestfs_sys::guestfs_lvm_vg,
 }
 
 impl Drop for LvmVg {
@@ -41,7 +40,7 @@ impl Drop for LvmVg {
 }
 
 pub struct LvmPv {
-    inner: *mut libguestfs_sys::guestfs_lvm_pv
+    inner: *mut libguestfs_sys::guestfs_lvm_pv,
 }
 
 impl Drop for LvmPv {
@@ -52,9 +51,8 @@ impl Drop for LvmPv {
     }
 }
 
-
 pub struct GuestDirEntry {
-    inner: *mut libguestfs_sys::guestfs_dirent
+    inner: *mut libguestfs_sys::guestfs_dirent,
 }
 
 impl Drop for GuestDirEntry {

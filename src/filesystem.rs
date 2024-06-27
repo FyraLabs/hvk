@@ -1,5 +1,8 @@
 use crate::{guestfs::GuestFs, Result};
-use std::{ffi::{CStr, CString}, str::Bytes};
+use std::{
+    ffi::{CStr, CString},
+    str::Bytes,
+};
 // use libguestfs_sys
 /// Helper function to convert a null-terminated array of strings to a Vec<&str>
 /// This is useful for converting the output of libguestfs functions that return
@@ -21,7 +24,6 @@ fn null_terminated_array_to_vec<'a>(array: *mut *mut i8) -> Vec<&'a str> {
     }
     vec
 }
-
 
 /// A representation of a file inside of a `[GuestFileSystem]`
 pub struct GuestFile<'a> {
@@ -52,8 +54,7 @@ impl GuestFileSystem<'_> {
             inner: GuestFs::new(),
         }
     }
-    
-    
+
     /// Add a drive to the disk image
     pub fn add_drive(&mut self, path: &str) -> Result<()> {
         self.inner.add_drive(path)
@@ -69,18 +70,16 @@ impl GuestFileSystem<'_> {
         self.inner.mount(devpath, mountpoint)
     }
 
-    
     /// Unmount a device from a mountpoint
     pub fn umount(&mut self, mountpoint: &str) -> Result<()> {
         self.inner.umount(mountpoint)
     }
-    
-    
+
     /// Creates an empty file at the specified path
     pub fn touch(&mut self, path: &str) -> Result<()> {
         self.inner.touch(path)
     }
-    
+
     /// Shutdown the guestfs appliance
     /// This is called automatically when the GuestFs object is dropped,
     /// but you can call it manually if you'd like to handle errors
