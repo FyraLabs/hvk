@@ -1,14 +1,7 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+mod error;
+mod filesystem;
+mod guestfs;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+type Result<T> = std::result::Result<T, crate::error::Error>;
+use std::{ffi::{CStr, CString}, path::{Path, PathBuf}};
+// We should be re-implementing features from std::fs into here
