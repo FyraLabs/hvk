@@ -25,15 +25,16 @@ fn null_terminated_array_to_vec<'a>(array: *mut *mut i8) -> Vec<&'a str> {
 
 /// A representation of a file inside of a `[GuestFileSystem]`
 pub struct GuestFile<'a> {
-    handle: GuestFs<'a>,
+    // a mutable handle to GuestFileSystem
+    handle: &'a mut GuestFileSystem<'a>,
     path: String,
 }
 
 impl GuestFile<'_> {
-    pub fn create(&self, path: &str) -> Result<Self> {
-        self.handle.touch(path)?;
+    pub fn create(fs: &mut GuestFileSystem, path: &str) -> Result<Self> {
+        fs.touch(path)?;
         Ok(Self {
-            handle: self.handle,
+            handle: todo!(), // proper pointer to GuestFileSystem
             path: path.to_string(),
         })
     }

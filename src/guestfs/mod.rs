@@ -157,8 +157,8 @@ impl<'a> GuestFs<'a> {
         match unsafe { libguestfs_sys::guestfs_cat(self.handle, CString::new(path)?.as_ptr()) } {
             data if data.is_null() => Err(self.parse_error(self.last_error_number())),
             data => {
-                let data = unsafe { ffi_utils::from_raw_full(data) };
-                Ok(data.into_iter().map(|x| x as u8).collect())
+                let data = unsafe { ffi_utils::from_raw_array_full(data) };
+                Ok(data.into_iter().map(|x| x.to_owned() as u8).collect())
             }
         }
     }

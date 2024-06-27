@@ -6,7 +6,6 @@ use crate::filesystem::GuestFileSystem;
 // we should get data from guestfs::guestfs_stat
 pub struct Stat {
     inner: *mut guestfs_stat,
-    fs: GuestFileSystem,
 }
 
 impl Drop for Stat {

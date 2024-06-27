@@ -1,6 +1,8 @@
 use std::ffi::CString;
 
-pub fn from_raw_array_full<T>(ptr_full: *mut T) -> Box<[T]> {
+pub fn from_raw_array_full<T>(ptr_full: *mut T) -> Box<[T]>
+    where T: Clone
+{
     // Safety: ptr_full is a valid pointer to a null-terminated array of T
     // and the array is terminated by a null value.
     // The array is supposed to be freed by the caller.
@@ -18,7 +20,10 @@ pub fn from_raw_array_full<T>(ptr_full: *mut T) -> Box<[T]> {
     // Safety: ptr_full is a valid pointer to a null-terminated array of T
     // and the array is terminated by a null value.
     // The array is supposed to be freed by the caller.
-    unsafe { std::slice::from_raw_parts(ptr_full, len) }.into()
+    let a = unsafe { std::slice::from_raw_parts(ptr_full, len) };
+    
+    a.into()
+    
 }
 
 pub unsafe fn from_raw_cstring_array_full(ptr_full: *mut *mut i8) -> Box<[CString]> {
