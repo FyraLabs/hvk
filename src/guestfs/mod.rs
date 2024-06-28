@@ -1,8 +1,10 @@
 use crate::Result;
 use libguestfs_sys::guestfs_h;
 use std::{
+    borrow::Borrow,
     ffi::{CStr, CString},
     io::{Cursor, Read},
+    path::Path,
 };
 use types::DirEntList;
 mod ffi_utils;
@@ -26,6 +28,10 @@ fn null_terminated_array_to_vec<'a>(array: *mut *mut i8) -> Vec<&'a str> {
 
 // guestfs functions return 0 on success, -1 on error
 
+// https://www.libguestfs.org/guestfs.3.html#api-calls
+// Main GuestFS struct and its associated functions
+
+/// GuestFS struct that wraps the libguestfs handle
 pub struct GuestFs<'a> {
     handle: *mut guestfs_h,
     _marker: std::marker::PhantomData<&'a ()>,
@@ -44,8 +50,21 @@ impl Drop for GuestFs<'_> {
     }
 }
 
-// todo: take shit from filesystem.rs because i ported it
+impl From<*mut guestfs_h> for GuestFs<'_> {
+    fn from(handle: *mut guestfs_h) -> Self {
+        Self {
+            handle,
+            _marker: std::marker::PhantomData,
+        }
+    }
+}
+
+// todo: take from filesystem.rs because i ported it
 impl<'a> GuestFs<'a> {
+    pub(crate) fn handle(&self) -> *mut guestfs_h {
+        self.handle
+    }
+    
     #[doc(alias = "create", "guestfs_create")]
     pub fn new() -> Self {
         let handle = unsafe { libguestfs_sys::guestfs_create() };
@@ -181,11 +200,11 @@ impl<'a> GuestFs<'a> {
         };
 
         if buf.is_null() {
-            return Err(self.parse_error(self.last_error_number()));
+            Err(self.parse_error(self.last_error_number()))
         } else {
-            return Ok(Cursor::new(unsafe {
+            Ok(Cursor::new(unsafe {
                 std::slice::from_raw_parts(buf, *buf_size)
-            }));
+            }))
         }
     }
 
@@ -228,10 +247,85 @@ impl<'a> GuestFs<'a> {
         match unsafe { libguestfs_sys::guestfs_readdir(self.handle, CString::new(path)?.as_ptr()) }
         {
             entries if entries.is_null() => Err(self.parse_error(self.last_error_number())),
-            entries => {
-                let entries = DirEntList { inner: entries };
-                Ok(entries)
+            entries => Ok(DirEntList { inner: entries }),
+        }
+    }
+
+    /// Download a file from the disk image to the host
+    pub fn download(&self, path: &str, dest: &str) -> Result<()> {
+        self.wrap_error(unsafe {
+            libguestfs_sys::guestfs_download(
+                self.handle,
+                CString::new(path)?.as_ptr(),
+                CString::new(dest)?.as_ptr(),
+            )
+        })
+    }
+    /// Get ACL type of a file
+    /// The acltype parameter may be:
+    /// access
+    ///     Return the ordinary (access) ACL for any file, directory or other filesystem object.
+    /// default
+    ///
+    ///     Return the default ACL. Normally this only makes sense if path is a directory.
+    ///
+    // todo: high level function: enum for acltype
+    pub fn acl_get_file(&self, path: &str, acltype: &str) -> Result<String> {
+        match unsafe {
+            libguestfs_sys::guestfs_acl_get_file(
+                self.handle,
+                CString::new(path)?.as_ptr(),
+                CString::new(acltype)?.as_ptr(),
+            )
+        } {
+            acl if acl.is_null() => Err(self.parse_error(self.last_error_number())),
+            acl => {
+                let acl = unsafe { CString::from_raw(acl) };
+                Ok(acl.to_string_lossy().into_owned())
             }
         }
     }
+
+    pub fn acl_set_file(&self, path: &str, acltype: &str, acl: &str) -> Result<()> {
+        self.wrap_error(unsafe {
+            libguestfs_sys::guestfs_acl_set_file(
+                self.handle,
+                CString::new(path)?.as_ptr(),
+                CString::new(acltype)?.as_ptr(),
+                CString::new(acl)?.as_ptr(),
+            )
+        })
+    }
+
+    pub fn add_drive_ro(&self, path: &str) -> Result<()> {
+        self.wrap_error(unsafe {
+            libguestfs_sys::guestfs_add_drive_ro(self.handle, CString::new(path)?.as_ptr())
+        })
+    }
+
+    // This function accepts a list of domain arguments which are variable args
+    // time to use varargs
+    // variyak time
+    // pub fn add_domain(&self, dom: &str) -> Result<()> {
+    //     self.wrap_error(unsafe {
+    //         libguestfs_sys::guestfs_add_domain(self.handle, CString::new(dom)?.as_ptr())
+    //     })
+    // } 
+    //
+    /// Clear the Augeas node (similar to `augtool clear`)
+    pub fn aug_clear(&mut self, augpath: &str) -> Result<()> {
+        self.wrap_error(unsafe {
+            libguestfs_sys::guestfs_aug_clear(self.handle, CString::new(augpath)?.as_ptr())
+        })
+    }
+    
+    /// Close the Augeas handle
+    /// This function should be called automatically in the idiomatic interface, but we're exposing it here so we can use it
+    pub fn aug_close(&mut self) -> Result<()> {
+        self.wrap_error(unsafe {
+            libguestfs_sys::guestfs_aug_close(self.handle)
+        })
+    }
+    
+    
 }

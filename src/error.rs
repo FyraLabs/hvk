@@ -1,6 +1,4 @@
 // error types powered by thiserror
-
-use std::os::raw::c_int;
 #[derive(thiserror::Error, Debug)]
 #[non_exhaustive]
 #[must_use]
