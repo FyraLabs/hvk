@@ -5,8 +5,6 @@ pub struct DirEntList {
     pub inner: *mut libguestfs_sys::guestfs_dirent_list,
 }
 
-
-
 impl Drop for DirEntList {
     fn drop(&mut self) {
         unsafe {
@@ -14,7 +12,6 @@ impl Drop for DirEntList {
         }
     }
 }
-
 
 // todo: Re-implementation of std::fs::File for a singular file
 // we should get data from guestfs::guestfs_stat

@@ -29,8 +29,6 @@ use std::{
 // suggestion: some kind of method to also open a write handle to the file somehow and write it live too
 //
 
-
-
 /// An Augeas device handle for the filesystem
 ///
 pub struct Augeas<'a> {
@@ -53,7 +51,6 @@ pub struct GuestFile<'a> {
 
 // horrible...
 impl<'a> GuestFile<'a> {
-
     // somehow create a file handle that's also owned by a GuestFileSystem..., but lets you use a GuestFs handle
     pub fn create(fs: Arc<*mut GuestFileSystem<'a>>, path: String) -> Result<Self> {
         // creating a whole new pointer to a GuestFs just to get a new mutable handle, may cause it to dropped
@@ -62,23 +59,19 @@ impl<'a> GuestFile<'a> {
         // we want to pass through the handle so it doesn't get dropped early
         //
         //
-        
+
         // horrible
-        unsafe {
-            fs.as_mut()
-        }.expect("nullptr").touch(&path)?;
+        unsafe { fs.as_mut() }.expect("nullptr").touch(&path)?;
         Ok(Self { fs, path })
     }
-    
+
     pub fn download(&self, dest: &Path) -> Result<()> {
         <&GuestFs>::from(self).download(&self.path, &dest.display().to_string())
     }
-    
+
     pub fn cat(&self) -> Result<Box<[u8]>> {
         <&GuestFs>::from(self).cat(&self.path)
     }
-    
-    
 }
 
 impl<'a> From<&GuestFile<'a>> for &GuestFs<'a> {

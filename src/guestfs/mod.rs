@@ -64,7 +64,7 @@ impl<'a> GuestFs<'a> {
     pub(crate) fn handle(&self) -> *mut guestfs_h {
         self.handle
     }
-    
+
     #[doc(alias = "create", "guestfs_create")]
     pub fn new() -> Self {
         let handle = unsafe { libguestfs_sys::guestfs_create() };
@@ -310,7 +310,7 @@ impl<'a> GuestFs<'a> {
     //     self.wrap_error(unsafe {
     //         libguestfs_sys::guestfs_add_domain(self.handle, CString::new(dom)?.as_ptr())
     //     })
-    // } 
+    // }
     //
     /// Clear the Augeas node (similar to `augtool clear`)
     pub fn aug_clear(&mut self, augpath: &str) -> Result<()> {
@@ -318,14 +318,10 @@ impl<'a> GuestFs<'a> {
             libguestfs_sys::guestfs_aug_clear(self.handle, CString::new(augpath)?.as_ptr())
         })
     }
-    
+
     /// Close the Augeas handle
     /// This function should be called automatically in the idiomatic interface, but we're exposing it here so we can use it
     pub fn aug_close(&mut self) -> Result<()> {
-        self.wrap_error(unsafe {
-            libguestfs_sys::guestfs_aug_close(self.handle)
-        })
+        self.wrap_error(unsafe { libguestfs_sys::guestfs_aug_close(self.handle) })
     }
-    
-    
 }
